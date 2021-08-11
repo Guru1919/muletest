@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="46ac6b95-9b40-497d-8c01-e972e1f7781c" >
+		<http:listener-connection host="0.0.0.0" port="8085" />
+	</http:listener-config>
+	<flow name="batch-testFlow" doc:id="ffa13651-2522-4569-bbbb-80809e99c515" >
+		<http:listener doc:name="Listener" doc:id="9766568a-974c-4350-8aef-166626f1fd9e" config-ref="HTTP_Listener_config" path="/batch-test"/>
+		<ee:transform doc:name="Transform Message" doc:id="a4c2a3fc-fa40-495b-9733-cc5698df7475" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"ID": attributes.queryParams.ID
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[attributes.queryParams.ID]" doc:name="Set Variable" doc:id="1fad018d-bf90-4607-9ce9-473817eb9d62" variableName="queryp"/>
+		<set-payload value="#[[1,2,3,4,5,6]]" doc:name="Set Payload" doc:id="769aa82e-2eaf-4440-b1d5-dcd27bf6ece9" />
+		<batch:job jobName="batch-testBatch_Job" doc:id="d8c2d2ab-edf3-40ad-873a-285d9b8b0031" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="bc63dd67-c066-4b6d-9ae4-b9e7a73c8065" >
+					<set-variable value='"sai"' doc:name="Set Variable" doc:id="43c00920-8cff-463c-8c41-b311f4c68340" variableName="var1"/>
+					<set-payload value="#[payload * 10]" doc:name="Set Payload" doc:id="61054d02-a387-4be4-94ab-7181d26bc597" />
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="46e2ba01-e4b9-4e37-bc26-478ab569ec53" size="10">
+						<ee:transform doc:name="Transform Message" doc:id="0425b3df-84d9-4614-a6f5-1b647bdb1726">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+						<logger level="INFO" doc:name="Logger" doc:id="73203a4c-56e4-4201-abb9-14526a50372a" message="#[vars.queryp]"/>
+						<logger level="INFO" doc:name="Logger" doc:id="464794cd-74c9-420b-999e-ce9d1388bf35" message="#[vars.var1]"/>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+		</batch:job>
+		<ee:transform doc:name="Transform Message" doc:id="1edd9d92-cf93-469d-b9e5-663794c1eed7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"ID": vars.queryp,
+	"name":vars.var1
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
